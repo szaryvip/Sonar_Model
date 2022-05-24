@@ -1,9 +1,11 @@
 const H = 128;
 const L = 2 * H + 1;
+let number_of_fish = 5;
 let u = new Array(L); // u(t)
 let u_next = new Array(L); // u(t)
 let u_prev = new Array(L); // u(t)
 let land_height = new Array(L);
+let fish_positions = new Array(number_of_fish);
 
 let img;
 let slider;
@@ -12,8 +14,7 @@ let A = 127;
 let actual_pos = H;
 let omega = 5;
 let t = 0;
-const steps_per_frame = 1;
-const dt = 1 / 60 / steps_per_frame;
+const dt = 1 / 60;
 let v = 0.1; // prędkość fazowa
 const dx = 1 / L;
 let c2 = v * v * dt * dt / dx / dx;
@@ -54,7 +55,7 @@ function drawTitle() {
 }
 
 function generateLand() {
-	let height = 30;
+	let height = 40;
   	for (let x = 0; x < L; x++) {
 	  	let y = random([-4, -2, -1, 0, 1, 2, 4]);
 		height += y;
@@ -63,12 +64,27 @@ function generateLand() {
 }
 
 function drawLand() {
-	for (let x = 0; x < L; x++)
-		u[x][L-land_height[x]] = 0;
+	for (let x = 0; x < L; x++) {
+		for (let y = 0; y < land_height[x]; y++)
+			u[x][L-y] = 0;
+	}
+}
+
+function generateFish() {
+	for (let fish = 0; fish < number_of_fish; fish++){
+		fish_positions[fish] = [int(random(10, L-10)), int(random(10, L-10))]
+	}
+}
+
+function drawFish() {
+	for (let fish = 0; fish < number_of_fish; fish++){
+		for (let flen = -7; flen < 8; flen++)
+			u[fish_positions[fish][0]+flen][fish_positions[fish][1]] = 0;
+	}
 }
 
 function setup() {
-	createCanvas(windowWidth-30, windowHeight-30);
+	createCanvas(windowWidth-16, windowHeight-16);
 	img = createImage(L, L);
 	background(117, 230, 218)
 	// 24 154 180 -blue grotto 189ab4
@@ -78,6 +94,8 @@ function setup() {
 	prepareSliders();
 	drawTitle();
 	generateLand();
+	generateFish();
+	print(fish_positions);
 
 	for (let i = 0; i < L; ++i) {
 		u[i] = new Array(L);
@@ -129,16 +147,15 @@ function draw() {
         actual_pos += 1;
     }
 
-    for (let step = 0; step < steps_per_frame; ++step) {
-        A = sliderA.value() * 100;
-        omega = sliderOm.value();
-        u[actual_pos][0] = A * sin(omega * t);
+	A = sliderA.value() * 100;
+	omega = sliderOm.value();
+	u[actual_pos][0] = A * sin(omega * t);
 
-        drawLand();
-
-        update()
-        t += dt;
-    }
+	drawLand();
+	drawFish();
+	update()
+	t += dt;
+    
     img.loadPixels();
     for (let x = 0; x < L; ++x)
         for (let y = 0; y < L; ++y)
