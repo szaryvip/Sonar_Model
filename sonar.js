@@ -8,7 +8,16 @@ let land_height = new Array(L);
 let fish_positions = new Array(number_of_fish);
 
 let img;
-let slider;
+// let pixel_fish = [[1,1,0,0,0,0,0,1,1,1,0],
+// 				  [0,0,0,0,0,0,0,0,1,0,0],
+// 				  [0,0,0,0,0,0,0,0,0,0,0],
+// 				  [0,0,0,0,0,0,0,0,1,1,0],
+// 				  [1,0,0,0,0,0,0,1,1,1,1]]
+let sliderA;
+let sliderAl;
+let sliderOm;
+let sliderV;
+let fish_wait = 0;
 const SCALE = 2;
 let A = 127;
 let actual_pos = H;
@@ -72,14 +81,29 @@ function drawLand() {
 
 function generateFish() {
 	for (let fish = 0; fish < number_of_fish; fish++){
-		fish_positions[fish] = [int(random(10, L-10)), int(random(10, L-10))]
+		fish_positions[fish] = [int(random(10, L-15)), int(random(10, L-10))]
 	}
 }
 
 function drawFish() {
 	for (let fish = 0; fish < number_of_fish; fish++){
-		for (let flen = -7; flen < 8; flen++)
-			u[fish_positions[fish][0]+flen][fish_positions[fish][1]] = 0;
+		for (let flen = 0; flen < 11; flen++) {
+			for (let fhig = 0; fhig < 5; fhig++){
+				// if (pixel_fish[fhig][flen] == 0){
+				u[fish_positions[fish][0]+flen][fish_positions[fish][1]+fhig] = 0;
+				// }
+				
+			}
+		}
+	}
+}
+
+function moveFish() {
+	for (let fish = 0; fish < number_of_fish; fish++) {
+		if(fish_positions[fish][0] == L-11) {
+			fish_positions[fish][0] = 0;
+		} 
+		fish_positions[fish][0] += 1;
 	}
 }
 
@@ -153,6 +177,13 @@ function draw() {
 
 	drawLand();
 	drawFish();
+	if (fish_wait == 0) {
+		moveFish();
+		fish_wait = 5;
+	} else {
+		fish_wait--;
+	}
+	
 	update()
 	t += dt;
     
