@@ -30,29 +30,33 @@ let c2 = v * v * dt * dt / dx / dx;
 let alpha = 0.5;
 
 function prepareSliders() {
-  sliderA = createSlider(1, 30, 5);
+  sliderA = createSlider(1, 130, 25);
   sliderA.position(windowWidth/2-60, windowHeight/2+L+20);
   sliderA.style('width', '120px');
-  textSize(15);
-  text('Amplituda sygnalu', sliderA.x + sliderA.width + 10, sliderA.y+5);
 
   sliderOm = createSlider(1, 13, 5);
   sliderOm.position(windowWidth/2-60, windowHeight/2+L+40);
   sliderOm.style('width', '120px');
-  textSize(15);
-  text('Omega', sliderOm.x + sliderOm.width + 10, sliderOm.y+5);
-
-  sliderAl = createSlider(1, 10, 5);
+  
+  sliderAl = createSlider(0, 100, 5, 5);
   sliderAl.position(windowWidth/2-60, windowHeight/2+L+60);
   sliderAl.style('width', '120px');
-  textSize(15);
-  text('Alpha', sliderAl.x + sliderAl.width + 10, sliderAl.y+5);
-
-  sliderV = createSlider(1, 8, 5);
+  
+  sliderV = createSlider(0, 15, 5);
   sliderV.position(windowWidth/2-60, windowHeight/2+L+80);
   sliderV.style('width', '120px');
-  textSize(15);
-  text('Predkosc fazowa (v)', sliderV.x + sliderV.width + 10, sliderV.y+5);
+}
+
+function updateTexts() {
+	background(117, 230, 218);
+	textSize(15);
+	textStyle(NORMAL);
+	textAlign(LEFT);
+	text('Amplitude: ' + A, sliderA.x + sliderA.width + 10, sliderA.y+5);
+	text('Omega: ' + omega, sliderOm.x + sliderOm.width + 10, sliderOm.y+5);
+	text('Alpha: ' + alpha, sliderAl.x + sliderAl.width + 10, sliderAl.y+5);
+	text('Phase speed (v): ' + v, sliderV.x + sliderV.width + 10, sliderV.y+5);
+	drawTitle();
 }
 
 function drawTitle() {
@@ -89,10 +93,7 @@ function drawFish() {
 	for (let fish = 0; fish < number_of_fish; fish++){
 		for (let flen = 0; flen < 11; flen++) {
 			for (let fhig = 0; fhig < 5; fhig++){
-				// if (pixel_fish[fhig][flen] == 0){
 				u[fish_positions[fish][0]+flen][fish_positions[fish][1]+fhig] = 0;
-				// }
-				
 			}
 		}
 	}
@@ -119,7 +120,6 @@ function setup() {
 	drawTitle();
 	generateLand();
 	generateFish();
-	print(fish_positions);
 
 	for (let i = 0; i < L; ++i) {
 		u[i] = new Array(L);
@@ -136,8 +136,8 @@ function setup() {
 }
 
 function update() {
-	alpha = sliderAl.value()/10;
-	v = sliderV.value()/50;
+	alpha = sliderAl.value()/100;
+	v = sliderV.value()/100;
 	c2 = v * v * dt * dt / dx / dx;
 	for (let x = 1; x < L - 1; ++x)
 		for (let y = 1; y < L - 1; ++y) {
@@ -149,15 +149,23 @@ function update() {
 
 	// brzegi
 	for (let x = 0; x < L; ++x) {
-		u_next[x][0] = u_next[x][1];
-		u_next[0][x] = u_next[1][x];
-		u_next[x][L - 1] = u_next[x][L - 2];
-		u_next[L - 1][x] = u_next[L - 2][x];
+		u[x][0] = u[x][1];
+		u[0][x] = u[1][x];
+		u[x][L - 1] = u[x][L - 2];
+		u[L - 1][x] = u[L - 2][x];
 	}
 
 	for (let x = 0; x < L; ++x) {
 		u_prev[x] = u[x].slice();
 		u[x] = u_next[x].slice();
+	}
+	
+	// brzegi
+	for (let x = 0; x < L; ++x) {
+		u_next[x][0] = u_next[x][1];
+		u_next[0][x] = u_next[1][x];
+		u_next[x][L - 1] = u_next[x][L - 2];
+		u_next[L - 1][x] = u_next[L - 2][x];
 	}
 }
 
@@ -171,7 +179,7 @@ function draw() {
         actual_pos += 1;
     }
 
-	A = sliderA.value() * 100;
+	A = sliderA.value() * 5;
 	omega = sliderOm.value();
 	u[actual_pos][0] = A * sin(omega * t);
 
@@ -183,8 +191,8 @@ function draw() {
 	} else {
 		fish_wait--;
 	}
-	
-	update()
+	update();
+	updateTexts();
 	t += dt;
     
     img.loadPixels();
