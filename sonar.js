@@ -4,10 +4,14 @@ let number_of_fish = 5;
 let u = new Array(L); // u(t)
 let u_next = new Array(L); // u(t)
 let u_prev = new Array(L); // u(t)
+let u_clear = new Array(L); // u(t)
+let u_next_clear = new Array(L); // u(t)
+let u_prev_clear = new Array(L); // u(t)
 let land_height = new Array(L);
 let fish_positions = new Array(number_of_fish);
 
-let img;
+let img_with_barriers;
+let clear_img;
 // let pixel_fish = [[1,1,0,0,0,0,0,1,1,1,0],
 // 				  [0,0,0,0,0,0,0,0,1,0,0],
 // 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -17,6 +21,8 @@ let sliderA;
 let sliderAl;
 let sliderOm;
 let sliderV;
+let button;
+let view_mode = 0;
 let fish_wait = 0;
 const SCALE = 2;
 let A = 127;
@@ -45,6 +51,21 @@ function prepareSliders() {
   sliderV = createSlider(0, 15, 5);
   sliderV.position(windowWidth/2-60, windowHeight/2+L+80);
   sliderV.style('width', '120px');
+}
+
+function prepareButton() {
+	button = createButton("Change view");
+	button.size(120, 40);
+	button.position(windowWidth/2-button.width/2, 150+2*L+50);
+	button.mousePressed(changeView);
+}
+
+function changeView() {
+	if (view_mode == 0){
+		view_mode = 1;
+	} else {
+		view_mode = 0;
+	}
 }
 
 function updateTexts() {
@@ -110,7 +131,8 @@ function moveFish() {
 
 function setup() {
 	createCanvas(windowWidth-16, windowHeight-16);
-	img = createImage(L, L);
+	img_with_barriers = createImage(L, L);
+	clear_img = createImage(L, L);
 	background(117, 230, 218)
 	// 24 154 180 -blue grotto 189ab4
 	// 5 68 94 -navy blue 05445e
@@ -118,6 +140,7 @@ function setup() {
 	
 	prepareSliders();
 	drawTitle();
+	prepareButton();
 	generateLand();
 	generateFish();
 
@@ -125,13 +148,21 @@ function setup() {
 		u[i] = new Array(L);
 		u_next[i] = new Array(L);
 		u_prev[i] = new Array(L);
+
+		u_clear[i] = new Array(L);
+		u_next_clear[i] = new Array(L);
+		u_prev_clear[i] = new Array(L);
 	}
 
 	for (let x = 0; x < L; ++x)
 		for (let y = 0; y < L; ++y) {
-		u[x][y] = 0;
-		u_next[x][y] = 0;
-		u_prev[x][y] = 0;
+			u[x][y] = 0;
+			u_next[x][y] = 0;
+			u_prev[x][y] = 0;
+
+			u_clear[x][y] = 0;
+			u_next_clear[x][y] = 0;
+			u_prev_clear[x][y] = 0;
 		}
 }
 
@@ -141,10 +172,15 @@ function update() {
 	c2 = v * v * dt * dt / dx / dx;
 	for (let x = 1; x < L - 1; ++x)
 		for (let y = 1; y < L - 1; ++y) {
-		u_next[x][y] = 2 * u[x][y] - u_prev[x][y];
-		u_next[x][y] += c2 * (u[x + 1][y] - 2 * u[x][y] + u[x - 1][y]);
-		u_next[x][y] += c2 * (u[x][y + 1] - 2 * u[x][y] + u[x][y - 1]);
-		u_next[x][y] -= alpha * dt * (u[x][y] - u_prev[x][y]);
+			u_next[x][y] = 2 * u[x][y] - u_prev[x][y];
+			u_next[x][y] += c2 * (u[x + 1][y] - 2 * u[x][y] + u[x - 1][y]);
+			u_next[x][y] += c2 * (u[x][y + 1] - 2 * u[x][y] + u[x][y - 1]);
+			u_next[x][y] -= alpha * dt * (u[x][y] - u_prev[x][y]);
+
+			u_next_clear[x][y] = 2 * u_clear[x][y] - u_prev_clear[x][y];
+			u_next_clear[x][y] += c2 * (u_clear[x + 1][y] - 2 * u_clear[x][y] + u_clear[x - 1][y]);
+			u_next_clear[x][y] += c2 * (u_clear[x][y + 1] - 2 * u_clear[x][y] + u_clear[x][y - 1]);
+			u_next_clear[x][y] -= alpha * dt * (u_clear[x][y] - u_prev_clear[x][y]);
 		}
 
 	// brzegi
@@ -153,11 +189,19 @@ function update() {
 		u[0][x] = u[1][x];
 		u[x][L - 1] = u[x][L - 2];
 		u[L - 1][x] = u[L - 2][x];
+
+		u_clear[x][0] = u_clear[x][1];
+		u_clear[0][x] = u_clear[1][x];
+		u_clear[x][L - 1] = u_clear[x][L - 2];
+		u_clear[L - 1][x] = u_clear[L - 2][x];
 	}
 
 	for (let x = 0; x < L; ++x) {
 		u_prev[x] = u[x].slice();
 		u[x] = u_next[x].slice();
+
+		u_prev_clear[x] = u_clear[x].slice();
+		u_clear[x] = u_next_clear[x].slice();
 	}
 	
 	// brzegi
@@ -166,6 +210,11 @@ function update() {
 		u_next[0][x] = u_next[1][x];
 		u_next[x][L - 1] = u_next[x][L - 2];
 		u_next[L - 1][x] = u_next[L - 2][x];
+
+		u_next_clear[x][0] = u_next_clear[x][1];
+		u_next_clear[0][x] = u_next_clear[1][x];
+		u_next_clear[x][L - 1] = u_next_clear[x][L - 2];
+		u_next_clear[L - 1][x] = u_next_clear[L - 2][x];
 	}
 }
 
@@ -183,23 +232,38 @@ function draw() {
 	omega = sliderOm.value();
 	u[actual_pos][0] = A * sin(omega * t);
 
-	drawLand();
-	drawFish();
+	u_clear[actual_pos][0] = A * sin(omega * t);
+	if (view_mode == 0){
+		drawLand();
+		drawFish();
+	}
+	
 	if (fish_wait == 0) {
 		moveFish();
 		fish_wait = 5;
 	} else {
 		fish_wait--;
 	}
+
 	update();
 	updateTexts();
 	t += dt;
     
-    img.loadPixels();
-    for (let x = 0; x < L; ++x)
-        for (let y = 0; y < L; ++y)
-        img.set(x, y, 127 + u[x][y]);
+	if (view_mode == 0){
+		img_with_barriers.loadPixels();
+		for (let x = 0; x < L; ++x)
+			for (let y = 0; y < L; ++y)
+				img_with_barriers.set(x, y, 127 + u[x][y]);
 
-    img.updatePixels();
-    image(img, windowWidth/2-L, windowHeight/2-L, L * SCALE, L * SCALE);
+		img_with_barriers.updatePixels();
+		image(img_with_barriers, windowWidth/2-L, 150, L * SCALE, L * SCALE);
+	} else {
+		clear_img.loadPixels();
+		for (let x = 0; x < L; ++x)
+			for (let y = 0; y < L; ++y)
+				clear_img.set(x, y, 127 + u[x][y]-u_clear[x][y]);
+
+		clear_img.updatePixels();
+		image(clear_img, windowWidth/2-L, 150, L * SCALE, L * SCALE);
+	}
 }
