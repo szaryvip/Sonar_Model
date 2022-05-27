@@ -11,7 +11,6 @@ let land_height = new Array(L);
 let fish_positions = new Array(number_of_fish);
 
 let img_with_barriers;
-let clear_img;
 // let pixel_fish = [[1,1,0,0,0,0,0,1,1,1,0],
 // 				  [0,0,0,0,0,0,0,0,1,0,0],
 // 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -132,7 +131,6 @@ function moveFish() {
 function setup() {
 	createCanvas(windowWidth-16, windowHeight-16);
 	img_with_barriers = createImage(L, L);
-	clear_img = createImage(L, L);
 	background(117, 230, 218)
 	// 24 154 180 -blue grotto 189ab4
 	// 5 68 94 -navy blue 05445e
@@ -233,10 +231,9 @@ function draw() {
 	u[actual_pos][0] = A * sin(omega * t);
 
 	u_clear[actual_pos][0] = A * sin(omega * t);
-	if (view_mode == 0){
-		drawLand();
-		drawFish();
-	}
+
+	drawLand();
+	drawFish();
 	
 	if (fish_wait == 0) {
 		moveFish();
@@ -249,21 +246,14 @@ function draw() {
 	updateTexts();
 	t += dt;
     
-	if (view_mode == 0){
-		img_with_barriers.loadPixels();
-		for (let x = 0; x < L; ++x)
-			for (let y = 0; y < L; ++y)
+	img_with_barriers.loadPixels();
+	for (let x = 0; x < L; ++x)
+		for (let y = 0; y < L; ++y)
+			if (view_mode == 0){
 				img_with_barriers.set(x, y, 127 + u[x][y]);
-
-		img_with_barriers.updatePixels();
-		image(img_with_barriers, windowWidth/2-L, 150, L * SCALE, L * SCALE);
-	} else {
-		clear_img.loadPixels();
-		for (let x = 0; x < L; ++x)
-			for (let y = 0; y < L; ++y)
-				clear_img.set(x, y, 127 + u[x][y]-u_clear[x][y]);
-
-		clear_img.updatePixels();
-		image(clear_img, windowWidth/2-L, 150, L * SCALE, L * SCALE);
-	}
+			} else{
+				img_with_barriers.set(x, y, 127 + u[x][y]-u_clear[x][y]);
+			}
+	img_with_barriers.updatePixels();
+	image(img_with_barriers, windowWidth/2-L, 150, L * SCALE, L * SCALE);
 }
