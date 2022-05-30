@@ -11,11 +11,6 @@ let land_height = new Array(L);
 let fish_positions = new Array(number_of_fish);
 
 let img_with_barriers;
-// let pixel_fish = [[1,1,0,0,0,0,0,1,1,1,0],
-// 				  [0,0,0,0,0,0,0,0,1,0,0],
-// 				  [0,0,0,0,0,0,0,0,0,0,0],
-// 				  [0,0,0,0,0,0,0,0,1,1,0],
-// 				  [1,0,0,0,0,0,0,1,1,1,1]]
 let sliderA;
 let sliderAl;
 let sliderOm;
@@ -128,6 +123,60 @@ function moveFish() {
 	}
 }
 
+function calculate_next_step() {
+	alpha = sliderAl.value()/100;
+	v = sliderV.value()/100;
+	c2 = v * v * dt * dt / dx / dx;
+	for (let x = 1; x < L - 1; ++x)
+		for (let y = 1; y < L - 1; ++y) {
+			u_next[x][y] = 2 * u[x][y] - u_prev[x][y];
+			u_next[x][y] += c2 * (u[x + 1][y] - 2 * u[x][y] + u[x - 1][y]);
+			u_next[x][y] += c2 * (u[x][y + 1] - 2 * u[x][y] + u[x][y - 1]);
+			u_next[x][y] -= alpha * dt * (u[x][y] - u_prev[x][y]);
+
+			u_next_clear[x][y] = 2 * u_clear[x][y] - u_prev_clear[x][y];
+			u_next_clear[x][y] += c2 * (u_clear[x + 1][y] - 2 * u_clear[x][y] + u_clear[x - 1][y]);
+			u_next_clear[x][y] += c2 * (u_clear[x][y + 1] - 2 * u_clear[x][y] + u_clear[x][y - 1]);
+			u_next_clear[x][y] -= alpha * dt * (u_clear[x][y] - u_prev_clear[x][y]);
+		}
+}
+
+function propagate_wave() {
+	// brzegi
+	for (let x = 0; x < L; ++x) {
+		u[x][0] = u[x][1];
+		u[0][x] = u[1][x];
+		u[x][L - 1] = u[x][L - 2];
+		u[L - 1][x] = u[L - 2][x];
+
+		u_clear[x][0] = u_clear[x][1];
+		u_clear[0][x] = u_clear[1][x];
+		u_clear[x][L - 1] = u_clear[x][L - 2];
+		u_clear[L - 1][x] = u_clear[L - 2][x];
+	}
+
+	for (let x = 0; x < L; ++x) {
+		u_prev[x] = u[x].slice();
+		u[x] = u_next[x].slice();
+
+		u_prev_clear[x] = u_clear[x].slice();
+		u_clear[x] = u_next_clear[x].slice();
+	}
+	
+	// brzegi
+	for (let x = 0; x < L; ++x) {
+		u_next[x][0] = u_next[x][1];
+		u_next[0][x] = u_next[1][x];
+		u_next[x][L - 1] = u_next[x][L - 2];
+		u_next[L - 1][x] = u_next[L - 2][x];
+
+		u_next_clear[x][0] = u_next_clear[x][1];
+		u_next_clear[0][x] = u_next_clear[1][x];
+		u_next_clear[x][L - 1] = u_next_clear[x][L - 2];
+		u_next_clear[L - 1][x] = u_next_clear[L - 2][x];
+	}
+}
+
 function setup() {
 	createCanvas(windowWidth-16, windowHeight-16);
 	img_with_barriers = createImage(L, L);
@@ -165,55 +214,18 @@ function setup() {
 }
 
 function update() {
-	alpha = sliderAl.value()/100;
-	v = sliderV.value()/100;
-	c2 = v * v * dt * dt / dx / dx;
-	for (let x = 1; x < L - 1; ++x)
-		for (let y = 1; y < L - 1; ++y) {
-			u_next[x][y] = 2 * u[x][y] - u_prev[x][y];
-			u_next[x][y] += c2 * (u[x + 1][y] - 2 * u[x][y] + u[x - 1][y]);
-			u_next[x][y] += c2 * (u[x][y + 1] - 2 * u[x][y] + u[x][y - 1]);
-			u_next[x][y] -= alpha * dt * (u[x][y] - u_prev[x][y]);
-
-			u_next_clear[x][y] = 2 * u_clear[x][y] - u_prev_clear[x][y];
-			u_next_clear[x][y] += c2 * (u_clear[x + 1][y] - 2 * u_clear[x][y] + u_clear[x - 1][y]);
-			u_next_clear[x][y] += c2 * (u_clear[x][y + 1] - 2 * u_clear[x][y] + u_clear[x][y - 1]);
-			u_next_clear[x][y] -= alpha * dt * (u_clear[x][y] - u_prev_clear[x][y]);
-		}
-
-	// brzegi
-	for (let x = 0; x < L; ++x) {
-		u[x][0] = u[x][1];
-		u[0][x] = u[1][x];
-		u[x][L - 1] = u[x][L - 2];
-		u[L - 1][x] = u[L - 2][x];
-
-		u_clear[x][0] = u_clear[x][1];
-		u_clear[0][x] = u_clear[1][x];
-		u_clear[x][L - 1] = u_clear[x][L - 2];
-		u_clear[L - 1][x] = u_clear[L - 2][x];
-	}
-
-	for (let x = 0; x < L; ++x) {
-		u_prev[x] = u[x].slice();
-		u[x] = u_next[x].slice();
-
-		u_prev_clear[x] = u_clear[x].slice();
-		u_clear[x] = u_next_clear[x].slice();
+	if (fish_wait == 0) {
+		moveFish();
+		fish_wait = 5;
+	} else {
+		fish_wait--;
 	}
 	
-	// brzegi
-	for (let x = 0; x < L; ++x) {
-		u_next[x][0] = u_next[x][1];
-		u_next[0][x] = u_next[1][x];
-		u_next[x][L - 1] = u_next[x][L - 2];
-		u_next[L - 1][x] = u_next[L - 2][x];
+	calculate_next_step();
+	propagate_wave();
+	updateTexts();
 
-		u_next_clear[x][0] = u_next_clear[x][1];
-		u_next_clear[0][x] = u_next_clear[1][x];
-		u_next_clear[x][L - 1] = u_next_clear[x][L - 2];
-		u_next_clear[L - 1][x] = u_next_clear[L - 2][x];
-	}
+	t += dt;
 }
 
 function draw() {
@@ -228,24 +240,15 @@ function draw() {
 
 	A = sliderA.value() * 5;
 	omega = sliderOm.value();
-	u[actual_pos][0] = A * sin(omega * t);
 
+	u[actual_pos][0] = A * sin(omega * t);
 	u_clear[actual_pos][0] = A * sin(omega * t);
 
 	drawLand();
 	drawFish();
 	
-	if (fish_wait == 0) {
-		moveFish();
-		fish_wait = 5;
-	} else {
-		fish_wait--;
-	}
-
 	update();
-	updateTexts();
-	t += dt;
-    
+	
 	img_with_barriers.loadPixels();
 	for (let x = 0; x < L; ++x)
 		for (let y = 0; y < L; ++y)
